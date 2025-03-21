@@ -1,0 +1,30 @@
+{
+  "name": "japanmallscan",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CornersOfTheCity/JapanMallScan.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CornersOfTheCity/JapanMallScan/issues"
+  },
+  "homepage": "https://github.com/CornersOfTheCity/JapanMallScan#readme",
+  "description": "",
+  "dependencies": {
+    "@ton/ton": "^15.2.1",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
