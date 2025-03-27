@@ -1,10 +1,19 @@
+# JapanMallScan
+## setting
+```
 # END_POINT=https://toncenter.com/api/v2/jsonRPC
 END_POINT=https://testnet.toncenter.com/api/v2/jsonRPC
-API_KEY=d6a9c8720a02093c6d6b8c7a21479a720217c7f0addca21386478995849f55b7
-CONTRACT_ADDRESS=EQB0TI1ZVAqHKaFCSJ1ZmtvCQU2Oq8Dsc6CMprge0FuH3c47
+API_KEY=
+CONTRACT_ADDRESS=
 
 ## DB
 POSTGRES_USER=postgres
 POSTGRES_HOST=localhost
 POSTGRES_DB=postgres
 POSTGRES_PASSWORD=
+```
+
+## start
+```
+npm start
+```
