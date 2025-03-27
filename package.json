@@ -21,9 +21,11 @@
   "description": "",
   "dependencies": {
     "@ton/ton": "^15.2.1",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "pg": "^8.14.1"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }

@@ -1,6 +1,23 @@
 import 'dotenv/config'
 import { Address, TonClient, beginCell, fromNano } from '@ton/ton';
-import { loadStakeEvent } from './decode';
+import {
+    loadCreateHuntEmit,
+    loadBuyEmit,
+    loadLotteryDrawEmit,
+    loadUserClaimBackEmit,
+    loadWinnerClaimEmit,
+    loadWinnerAbondonEmit
+} from './decode';
+
+import {
+    setupDatabase,
+    addHunt,
+    addBuy,
+    addLotteryDraw,
+    addUserClaim,
+    addWinnerClaim,
+    addWinnerAbandon
+} from './db';
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -12,13 +29,12 @@ async function main() {
     });
     const contractAddress = Address.parse(process.env.CONTRACT_ADDRESS!); // address that you want to fetch transactions from
 
+    await setupDatabase();
     // let recordLt = BigInt(55037007000001);
     // let recordHash = "v72Oi3/U1qjZkiSK33hygJXSBmPK6+LCk90P2/Jl4oQ=";
     let recordLt = BigInt(0);
     let recordHash = "0x0";
     while (true) {
-        // console.log("recordLt:", recordLt);
-        // console.log("recordHash:", recordHash);
         try {
             const transactions = recordLt == BigInt(0) ? await client.getTransactions(contractAddress, {
                 limit: 50,
@@ -32,9 +48,7 @@ async function main() {
                 if (tx.lt < recordLt) {
                     continue;
                 }
-                let txHash = tx.hash().toString('base64');
-                console.log(txHash);
-                console.log(tx.lt.toString());
+                // let txHash = tx.hash().toString('base64');
                 recordLt = tx.lt;
                 recordHash = tx.hash().toString('base64');
 
@@ -42,13 +56,31 @@ async function main() {
                 let body = bodySlice.clone();
 
                 switch (body.loadUint(32)!) {
-                    case 1119821542:
-                        let loadEvent = loadStakeEvent(bodySlice);
-                        console.log("loadEvent amount:", loadEvent.amount);
-                        console.log("loadEvent staker:", loadEvent.staker.toString());
-
+                    case 2514899494:
+                        let createHuntEmit = loadCreateHuntEmit(bodySlice);
+                        addHunt(createHuntEmit.huntId, recordHash, createHuntEmit.type, createHuntEmit.price, createHuntEmit.startTime, createHuntEmit.endTime, createHuntEmit.amount, createHuntEmit.selld);
+                        // console.log(createHuntEmit);
                         break;
-
+                    case 1315424692:
+                        let buyEmit = loadBuyEmit(bodySlice);
+                        addBuy(buyEmit.huntId, recordHash, buyEmit.userAddr.toString(), buyEmit.amount, buyEmit.timeasmp);
+                    // console.log(buyEmit);
+                    case 1274955844:
+                        let lotteryDrawEmit = loadLotteryDrawEmit(bodySlice);
+                        addLotteryDraw(lotteryDrawEmit.huntId, recordHash, lotteryDrawEmit.drawer.toString(), lotteryDrawEmit.winner.toString(), lotteryDrawEmit.winAmount, lotteryDrawEmit.timeStamp);
+                    // console.log(lotteryDrawEmit);
+                    case 1780621300:
+                        let userClaimBackEmit = loadUserClaimBackEmit(bodySlice);
+                        addUserClaim(userClaimBackEmit.huntId, recordHash, userClaimBackEmit.claimer.toString(), userClaimBackEmit.claimAmount, userClaimBackEmit.timeStamp);
+                    // console.log(userClaimBackEmit);
+                    case 462498381:
+                        let winnerClaimEmit = loadWinnerClaimEmit(bodySlice);
+                        addWinnerClaim(winnerClaimEmit.huntId, recordHash, winnerClaimEmit.claimer.toString(), winnerClaimEmit.claimAmount, winnerClaimEmit.timeStamp);
+                    // console.log(winnerClaimEmit);
+                    case 4023690496:
+                        let winnerAbondonEmit = loadWinnerAbondonEmit(bodySlice);
+                        addWinnerAbandon(winnerAbondonEmit.huntId, recordHash, winnerAbondonEmit.winner.toString(), winnerAbondonEmit.abondon, winnerAbondonEmit.timeStamp);
+                    // console.log(winnerAbondonEmit);
                     default:
                         break;
                 }
