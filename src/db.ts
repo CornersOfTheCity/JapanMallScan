@@ -1,64 +1,65 @@
-import { Client } from 'pg';
+import { Pool } from 'pg';
 
+// 创建连接池
+const pool = new Pool({
+    user: process.env.POSTGRES_USER || 'postgres',
+    host: process.env.POSTGRES_HOST || 'localhost',
+    database: process.env.POSTGRES_DB || 'postgres',
+    password: process.env.POSTGRES_PASSWORD || '',
+    port: Number(process.env.POSTGRES_PORT || '5432'),
+});
 // 异步函数：设置数据库和表
 export async function setupDatabase() {
-    // 创建初始连接
-    const initialClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: process.env.POSTGRES_DB || 'postgres',
-        password: process.env.POSTGRES_PASSWORD || '',
-        port: 5432,
-    });
-
     // 处理初始数据库创建
-    try {
-        await initialClient.connect();
-        console.log('Connected to PostgreSQL');
+    // try {
+    //     await client.connect();
+    //     console.log('Connected to PostgreSQL');
 
-        // 检查数据库是否存在
-        const dbCheck = await initialClient.query(`
-      SELECT 1 FROM pg_database WHERE datname = 'contract';
-    `);
-        if (dbCheck.rowCount === 0) {
-            try {
-                await initialClient.query('CREATE DATABASE contract');
-                console.log('Database "contract" created');
-            } catch (createErr) {
-                console.error('Error creating database:', createErr);
-                throw createErr;
-            }
-        } else {
-            console.log('Database "contract" already exists, skipping creation');
-        }
-    } catch (err) {
-        console.error('Error during initial setup:', err);
-        throw err;
-    } finally {
-        await initialClient.end();
-    }
+    //     // 检查数据库是否存在
+    //     const dbCheck = await client.query(`
+    //   SELECT 1 FROM pg_database WHERE datname = 'contract';
+    // `);
+    //     if (dbCheck.rowCount === 0) {
+    //         try {
+    //             await client.query('CREATE DATABASE contract');
+    //             console.log('Database "contract" created');
+    //         } catch (createErr) {
+    //             console.error('Error creating database:', createErr);
+    //             throw createErr;
+    //         }
+    //     } else {
+    //         console.log('Database "contract" already exists, skipping creation');
+    //     }
+    // } catch (err) {
+    //     console.error('Error during initial setup:', err);
+    //     throw err;
+    // } finally {
+    //     await client.end();
+    // }
 
     // 创建目标数据库连接
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
+    // const client = new Client({
+    //     user: process.env.POSTGRES_USER || 'postgres',
+    //     host: process.env.POSTGRES_HOST || 'localhost',
+    //     database: 'contract',
+    //     password: '',
+    //     port: 5432,
+    // });
 
     // 处理表创建
+    let client;
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
+        console.log('Connected to database');
 
-        // 检查并创建 hunt 表
-        const tableHuntCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'hunt';
+
+        // 检查并创建 contract_hunt 表
+        const tableHuntCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_hunt';
     `);
         if (tableHuntCheck.rowCount === 0) {
             const createTableHunt = `
-        CREATE TABLE hunt (
+        CREATE TABLE contract_hunt (
           id SERIAL PRIMARY KEY,
           huntId INTEGER UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -71,19 +72,19 @@ export async function setupDatabase() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
-            await contractClient.query(createTableHunt);
-            console.log('Table "hunt" created');
+            await client.query(createTableHunt);
+            console.log('Table "contract_hunt" created');
         } else {
-            console.log('Table "hunt" already exists, skipping creation');
+            console.log('Table "contract_hunt" already exists, skipping creation');
         }
 
-        // 检查并创建 buy 表
-        const tableBuyCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'buy';
+        // 检查并创建 contract_buy 表
+        const tableBuyCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_buy';
     `);
         if (tableBuyCheck.rowCount === 0) {
             const createTableBuy = `
-        CREATE TABLE buy (
+        CREATE TABLE contract_buy (
           id SERIAL PRIMARY KEY,
           huntId INTEGER NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -91,14 +92,14 @@ export async function setupDatabase() {
           buyAmount INTEGER NOT NULL,
           buyTime INTEGER NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (huntId) REFERENCES hunt(huntId)
+          FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId)
         );
 
          -- 创建触发器函数
         CREATE OR REPLACE FUNCTION update_hunt_selled()
         RETURNS TRIGGER AS $$
         BEGIN
-            UPDATE hunt
+            UPDATE contract_hunt
             SET selled = selled + NEW.buyAmount
             WHERE huntId = NEW.huntId;
             RETURN NEW;
@@ -107,23 +108,23 @@ export async function setupDatabase() {
 
         -- 创建触发器
         CREATE TRIGGER trigger_update_selled
-        AFTER INSERT ON buy
+        AFTER INSERT ON contract_buy
         FOR EACH ROW
         EXECUTE FUNCTION update_hunt_selled();
       `;
-            await contractClient.query(createTableBuy);
-            console.log('Table "buy" created');
+            await client.query(createTableBuy);
+            console.log('Table "contract_buy" created');
         } else {
-            console.log('Table "buy" already exists, skipping creation');
+            console.log('Table "contract_buy" already exists, skipping creation');
         }
 
         // 检查并创建 lotteryDraw 表
-        const tableLotteryDrawCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'lottery_draw';
+        const tableLotteryDrawCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_lottery_draw';
     `);
         if (tableLotteryDrawCheck.rowCount === 0) {
             const createTableLotteryDraw = `
-        CREATE TABLE lottery_draw (
+        CREATE TABLE contract_lottery_draw (
           id SERIAL PRIMARY KEY,
           huntId INTEGER UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -134,19 +135,19 @@ export async function setupDatabase() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
-            await contractClient.query(createTableLotteryDraw);
-            console.log('Table "lottery_draw" created');
+            await client.query(createTableLotteryDraw);
+            console.log('Table "contract_lottery_draw" created');
         } else {
-            console.log('Table "lottery_draw" already exists, skipping creation');
+            console.log('Table "contract_lottery_draw" already exists, skipping creation');
         }
 
         // 检查并创建 userClaim 表
-        const tableUserClaimCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_claim';
+        const tableUserClaimCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_user_claim';
     `);
         if (tableUserClaimCheck.rowCount === 0) {
             const createTableUserClaim = `
-        CREATE TABLE user_claim (
+        CREATE TABLE contract_user_claim (
           id SERIAL PRIMARY KEY,
           huntId INTEGER NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -154,14 +155,14 @@ export async function setupDatabase() {
           claimAmount INTEGER NOT NULL,
           claimTime TIMESTAMP NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (huntId) REFERENCES hunt(huntId) -- 添加外键约束
+          FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId) -- 添加外键约束
         );
 
         -- 创建触发器函数
         CREATE OR REPLACE FUNCTION update_hunt_selled_on_claim()
         RETURNS TRIGGER AS $$
         BEGIN
-            UPDATE hunt
+            UPDATE contract_hunt
             SET selled = selled - NEW.claimAmount
             WHERE huntId = NEW.huntId;
             RETURN NEW;
@@ -170,23 +171,23 @@ export async function setupDatabase() {
 
         -- 创建触发器
         CREATE TRIGGER trigger_update_selled_on_claim
-        AFTER INSERT ON user_claim
+        AFTER INSERT ON contract_user_claim
         FOR EACH ROW
         EXECUTE FUNCTION update_hunt_selled_on_claim();
       `;
-            await contractClient.query(createTableUserClaim);
-            console.log('Table "user_claim" created');
+            await client.query(createTableUserClaim);
+            console.log('Table "contract_user_claim" created');
         } else {
-            console.log('Table "user_claim" already exists, skipping creation');
+            console.log('Table "contract_user_claim" already exists, skipping creation');
         }
 
         // 检查并创建 winnerClaim 表
-        const tableWinnerClaimCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'winner_claim';
+        const tableWinnerClaimCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_winner_claim';
     `);
         if (tableWinnerClaimCheck.rowCount === 0) {
             const createTableWinnerClaim = `
-        CREATE TABLE winner_claim (
+        CREATE TABLE contract_winner_claim (
           id SERIAL PRIMARY KEY,
           huntId INTEGER UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -196,19 +197,19 @@ export async function setupDatabase() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
-            await contractClient.query(createTableWinnerClaim);
-            console.log('Table "winner_claim" created');
+            await client.query(createTableWinnerClaim);
+            console.log('Table "contract_winner_claim" created');
         } else {
-            console.log('Table "winner_claim" already exists, skipping creation');
+            console.log('Table "contract_winner_claim" already exists, skipping creation');
         }
 
         // 检查并创建 winnerAbandon 表
-        const tableWinnerAbandonCheck = await contractClient.query(`
-      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'winner_abandon';
+        const tableWinnerAbandonCheck = await client.query(`
+      SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'contract_winner_abandon';
     `);
         if (tableWinnerAbandonCheck.rowCount === 0) {
             const createTableWinnerAbandon = `
-        CREATE TABLE winner_abandon (
+        CREATE TABLE contract_winner_abandon (
           id SERIAL PRIMARY KEY,
           huntId INTEGER UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
@@ -218,75 +219,63 @@ export async function setupDatabase() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
-            await contractClient.query(createTableWinnerAbandon);
-            console.log('Table "winner_abandon" created');
+            await client.query(createTableWinnerAbandon);
+            console.log('Table "contract_winner_abandon" created');
         } else {
-            console.log('Table "winner_abandon" already exists, skipping creation');
+            console.log('Table "contract_winner_abandon" already exists, skipping creation');
         }
-    } catch (err) {
+
+    }
+    catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        client?.release();
     }
 }
 
 export async function addHunt(huntId: bigint, txHash: string, type: bigint, price: bigint, startTime: bigint, endTime: bigint, amount: bigint, selled: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
         const insertHunt = `
-        INSERT INTO hunt (huntId, txHash, type, price, startTime, endTime, amount, selled)
+        INSERT INTO contract_hunt (huntId, txHash, type, price, startTime, endTime, amount, selled)
         VALUES
           ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (huntId) DO NOTHING;
       `;
         const huntValues = [huntId, txHash, type, price, startTime, endTime, amount, selled];
-        await contractClient.query(insertHunt, huntValues);
-        console.log('data inserted into "hunt" with huntid:', huntId);
+        await client.query(insertHunt, huntValues);
+        console.log('data inserted into "contract_hunt" with huntid:', huntId);
 
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        // 释放客户端回连接池
+        await client?.release();
     }
 }
 
 export async function addBuy(huntId: bigint, txHash: string, address: string, buyAmount: bigint, timeStamp: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
+        client = await pool.connect();
 
         //         const exitValues = [
         //             huntId, address, buyAmount, timeStamp
         //         ];
         //         const checkQuery = `
-        //     SELECT 1 FROM buy
+        //     SELECT 1 FROM contract_buy
         //     WHERE huntId = $1 AND address = $2 AND buyAmount = $3 AND buyTime = $4;
         // `;
-        //         const checkResult = await contractClient.query(checkQuery, exitValues);
+        //         const checkResult = await client.query(checkQuery, exitValues);
 
         // if (checkResult.rowCount === 0) {
         const insertBuy = `
-        INSERT INTO buy (huntId, txHash, address, buyAmount, buyTime)
+        INSERT INTO contract_buy (huntId, txHash, address, buyAmount, buyTime)
         VALUES
           ($1, $2, $3, $4, $5)
         ON CONFLICT (txHash) DO NOTHING;
@@ -294,32 +283,24 @@ export async function addBuy(huntId: bigint, txHash: string, address: string, bu
         const buyValues = [
             huntId, txHash, address, buyAmount, timeStamp
         ];
-        await contractClient.query(insertBuy, buyValues);
-        console.log('data inserted into "buy" with huntid:', huntId);
+        await client.query(insertBuy, buyValues);
+        console.log('data inserted into "contract_buy" with huntid:', huntId);
         // }
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        await client?.release();
     }
 }
 
 export async function addLotteryDraw(huntId: bigint, txHash: string, drawer: string, winner: string, winAmount: bigint, drawTime: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
         const insertLotteryDraw = `
-    INSERT INTO lottery_draw (huntId, txHash, drawer, winner, winAmount, drawTime)
+    INSERT INTO contract_lottery_draw (huntId, txHash, drawer, winner, winAmount, drawTime)
     VALUES
     ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (huntId) DO NOTHING;
@@ -327,34 +308,26 @@ export async function addLotteryDraw(huntId: bigint, txHash: string, drawer: str
         const lotteryDrawValues = [
             huntId, txHash, drawer, winner, winAmount, drawTime
         ];
-        await contractClient.query(insertLotteryDraw, lotteryDrawValues);
-        console.log('Sample data inserted into "lottery_draw" with huntid:', huntId);
+        await client.query(insertLotteryDraw, lotteryDrawValues);
+        console.log('Sample data inserted into "contract_lottery_draw" with huntid:', huntId);
 
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        await client?.release();
     }
 
 
 }
 
 export async function addUserClaim(huntId: bigint, txHah: string, claimer: string, claimAmount: bigint, claimTime: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
         const insertUserClaim = `
-        INSERT INTO user_claim (huntId, txHah, claimer, claimAmount, claimTime)
+        INSERT INTO contract_user_claim (huntId, txHah, claimer, claimAmount, claimTime)
         VALUES
           ($1, $2, $3, $4, $5)
         ON CONFLICT (txHah) DO NOTHING;
@@ -362,32 +335,24 @@ export async function addUserClaim(huntId: bigint, txHah: string, claimer: strin
         const userClaimValues = [
             huntId, txHah, claimer, claimAmount, claimTime
         ];
-        await contractClient.query(insertUserClaim, userClaimValues);
-        console.log('Sample data inserted into "user_claim" with huntid:', huntId);
+        await client.query(insertUserClaim, userClaimValues);
+        console.log('Sample data inserted into "contract_user_claim" with huntid:', huntId);
 
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        await client?.release();
     }
 }
 
 export async function addWinnerClaim(huntId: bigint, txHash: string, claimer: string, claimAmount: bigint, claimTime: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
         const insertWinnerClaim = `
-        INSERT INTO winner_claim (huntId, txHash, claimer, claimAmount, claimTime)
+        INSERT INTO contract_user_claim (huntId, txHash, claimer, claimAmount, claimTime)
         VALUES
           ($1, $2, $3, $4, $5)
         ON CONFLICT (huntId) DO NOTHING;
@@ -395,33 +360,25 @@ export async function addWinnerClaim(huntId: bigint, txHash: string, claimer: st
         const winnerClaimValues = [
             huntId, txHash, claimer, claimAmount, claimTime
         ];
-        await contractClient.query(insertWinnerClaim, winnerClaimValues);
-        console.log('Sample data inserted into "winner_claim" with huntid:', huntId);
+        await client.query(insertWinnerClaim, winnerClaimValues);
+        console.log('Sample data inserted into "contract_user_claim" with huntid:', huntId);
 
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        client?.release();
     }
 }
 
 
 export async function addWinnerAbandon(huntId: bigint, txHash: string, winner: string, abandon: boolean, abandonTime: bigint) {
-    const contractClient = new Client({
-        user: process.env.POSTGRES_USER || 'postgres',
-        host: process.env.POSTGRES_HOST || 'localhost',
-        database: 'contract',
-        password: '',
-        port: 5432,
-    });
-
+    let client;
     // 处理表创建
     try {
-        await contractClient.connect();
-        console.log('Connected to "contract" database');
+        client = await pool.connect();
         const insertWinnerAbandon = `
-      INSERT INTO winner_abandon (huntId, txHash, winner, abandon, abandonTime)
+      INSERT INTO contract_winner_abandon (huntId, txHash, winner, abandon, abandonTime)
       VALUES
         ($1, $2, $3, $4, $5)
      ON CONFLICT (huntId) DO NOTHING;
@@ -429,16 +386,22 @@ export async function addWinnerAbandon(huntId: bigint, txHash: string, winner: s
         const winnerAbandonValues = [
             huntId, txHash, winner, abandon, abandonTime
         ];
-        await contractClient.query(insertWinnerAbandon, winnerAbandonValues);
-        console.log('Sample data inserted into "winner_abandon" with huntid:', huntId);
+        await client.query(insertWinnerAbandon, winnerAbandonValues);
+        console.log('Sample data inserted into "contract_winner_abandon" with huntid:', huntId);
 
     } catch (err) {
         console.error('Error during table setup:', err);
         throw err;
     } finally {
-        await contractClient.end();
+        client?.release();
     }
 }
+
+// 关闭连接池（在应用退出时调用）
+process.on('exit', async () => {
+    await pool.end();
+    console.log('Pool closed');
+});
 
 // 执行函数
 if (require.main === module) {
