@@ -1,0 +1,13 @@
+version: '3'
+services:
+  mall_scan:
+    image: mall.scan
+    container_name: mall.scan
+    restart: always
+      #  volumes:
+      #  - /root/cap_website/cap.nginx.conf:/etc/nginx/conf.d/cap.nginx.conf
+
+networks:
+  default:
+    name: mall_network
+    driver: bridge
