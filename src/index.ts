@@ -63,11 +63,11 @@ async function main() {
                         break;
                     case 1315424692:
                         let buyEmit = loadBuyEmit(bodySlice);
-                        addBuy(buyEmit.huntId, recordHash, buyEmit.userAddr.toString(), buyEmit.amount, buyEmit.timeasmp);
+                        addBuy(buyEmit.huntId, recordHash, buyEmit.userAddr.toString(), buyEmit.amount, buyEmit.startIndex, buyEmit.endIndex, buyEmit.timeasmp);
                     // console.log(buyEmit);
                     case 1274955844:
                         let lotteryDrawEmit = loadLotteryDrawEmit(bodySlice);
-                        addLotteryDraw(lotteryDrawEmit.huntId, recordHash, lotteryDrawEmit.drawer.toString(), lotteryDrawEmit.winner.toString(), lotteryDrawEmit.winAmount, lotteryDrawEmit.timeStamp);
+                        addLotteryDraw(lotteryDrawEmit.huntId, recordHash, lotteryDrawEmit.drawer.toString(), lotteryDrawEmit.luckyNumber, lotteryDrawEmit.winner.toString(), lotteryDrawEmit.winAmount, lotteryDrawEmit.timeStamp);
                     // console.log(lotteryDrawEmit);
                     case 1780621300:
                         let userClaimBackEmit = loadUserClaimBackEmit(bodySlice);

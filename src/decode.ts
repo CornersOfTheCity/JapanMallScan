@@ -31,21 +31,6 @@ export function loadStakeEvent(slice: Slice) {
 
 //************************* CreateHuntEmit *******************************/
 
-export function loadHunt(slice: Slice) {
-    const sc_0 = slice;
-    const _huntId = sc_0.loadIntBig(257);
-    const _type = sc_0.loadUintBig(8);
-    const _price = sc_0.loadCoins();
-    const _startTime = sc_0.loadIntBig(257);
-    const _endTime = sc_0.loadIntBig(257);
-    const sc_1 = sc_0.loadRef().beginParse();
-    const _amount = sc_1.loadIntBig(257);
-    const _selld = sc_1.loadIntBig(257);
-    const _userBuy = Dictionary.load(Dictionary.Keys.Address(), Dictionary.Values.BigInt(257), sc_1);
-    const _ownerships = Dictionary.load(Dictionary.Keys.BigInt(257), Dictionary.Values.Address(), sc_1);
-    return { $$type: 'Hunt' as const, huntId: _huntId, type: _type, price: _price, startTime: _startTime, endTime: _endTime, amount: _amount, selld: _selld, userBuy: _userBuy, ownerships: _ownerships };
-}
-
 export function loadCreateHuntEmit(slice: Slice) {
     const sc_0 = slice;
     if (sc_0.loadUint(32) !== 2514899494) { throw Error('Invalid prefix'); }
@@ -62,26 +47,29 @@ export function loadCreateHuntEmit(slice: Slice) {
 //************************* BuyEmit *******************************/
 export function loadBuyEmit(slice: Slice) {
     const sc_0 = slice;
-    if (sc_0.loadUint(32) !== 1315424692) { throw Error('Invalid prefix'); }
+    if (sc_0.loadUint(32) !== 2064160398) { throw Error('Invalid prefix'); }
     const _huntId = sc_0.loadIntBig(257);
     const _userAddr = sc_0.loadAddress();
     const _amount = sc_0.loadIntBig(257);
     const sc_1 = sc_0.loadRef().beginParse();
+    const _startIndex = sc_1.loadIntBig(257);
+    const _endIndex = sc_1.loadIntBig(257);
     const _timeasmp = sc_1.loadIntBig(257);
-    return { $$type: 'BuyEmit' as const, huntId: _huntId, userAddr: _userAddr, amount: _amount, timeasmp: _timeasmp };
+    return { $$type: 'BuyEmit' as const, huntId: _huntId, userAddr: _userAddr, amount: _amount, startIndex: _startIndex, endIndex: _endIndex, timeasmp: _timeasmp };
 }
 
 //************************* LotteryDrawEmit *******************************/
 export function loadLotteryDrawEmit(slice: Slice) {
     const sc_0 = slice;
-    if (sc_0.loadUint(32) !== 1274955844) { throw Error('Invalid prefix'); }
+    if (sc_0.loadUint(32) !== 1450582951) { throw Error('Invalid prefix'); }
     const _huntId = sc_0.loadIntBig(257);
     const _drawer = sc_0.loadAddress();
-    const _winner = sc_0.loadAddress();
+    const _luckyNumber = sc_0.loadIntBig(257);
     const sc_1 = sc_0.loadRef().beginParse();
+    const _winner = sc_1.loadAddress();
     const _winAmount = sc_1.loadIntBig(257);
     const _timeStamp = sc_1.loadIntBig(257);
-    return { $$type: 'LotteryDrawEmit' as const, huntId: _huntId, drawer: _drawer, winner: _winner, winAmount: _winAmount, timeStamp: _timeStamp };
+    return { $$type: 'LotteryDrawEmit' as const, huntId: _huntId, drawer: _drawer, luckyNumber: _luckyNumber, winner: _winner, winAmount: _winAmount, timeStamp: _timeStamp };
 }
 
 //************************* userClaimBack *******************************/

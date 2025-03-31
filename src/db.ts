@@ -90,6 +90,8 @@ export async function setupDatabase() {
           txHash VARCHAR(100) UNIQUE NOT NULL,
           address VARCHAR(100) NOT NULL,
           buyAmount INTEGER NOT NULL,
+          startIndex INTEGER NOT NULL,
+          endIndex INTEGER NOT NULL,
           buyTime INTEGER NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId)
@@ -129,6 +131,7 @@ export async function setupDatabase() {
           huntId INTEGER UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           drawer VARCHAR(100) NOT NULL,
+          luckyNumber INTEGER NOT NULL,
           winner VARCHAR(100) NOT NULL,
           winAmount INTEGER NOT NULL,
           drawTime TIMESTAMP NOT NULL,
@@ -258,7 +261,7 @@ export async function addHunt(huntId: bigint, txHash: string, type: bigint, pric
     }
 }
 
-export async function addBuy(huntId: bigint, txHash: string, address: string, buyAmount: bigint, timeStamp: bigint) {
+export async function addBuy(huntId: bigint, txHash: string, address: string, buyAmount: bigint, startIndex: bigint, endIndex: bigint, timeStamp: bigint) {
     let client;
     // 处理表创建
     try {
@@ -275,13 +278,13 @@ export async function addBuy(huntId: bigint, txHash: string, address: string, bu
 
         // if (checkResult.rowCount === 0) {
         const insertBuy = `
-        INSERT INTO contract_buy (huntId, txHash, address, buyAmount, buyTime)
+        INSERT INTO contract_buy (huntId, txHash, address, buyAmount, startIndex, endIndex, buyTime)
         VALUES
-          ($1, $2, $3, $4, $5)
+          ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (txHash) DO NOTHING;
       `;
         const buyValues = [
-            huntId, txHash, address, buyAmount, timeStamp
+            huntId, txHash, address, buyAmount, startIndex, endIndex, timeStamp
         ];
         await client.query(insertBuy, buyValues);
         console.log('data inserted into "contract_buy" with huntid:', huntId);
@@ -294,19 +297,19 @@ export async function addBuy(huntId: bigint, txHash: string, address: string, bu
     }
 }
 
-export async function addLotteryDraw(huntId: bigint, txHash: string, drawer: string, winner: string, winAmount: bigint, drawTime: bigint) {
+export async function addLotteryDraw(huntId: bigint, txHash: string, drawer: string, luckyNumber: bigint, winner: string, winAmount: bigint, drawTime: bigint) {
     let client;
     // 处理表创建
     try {
         client = await pool.connect();
         const insertLotteryDraw = `
-    INSERT INTO contract_lottery_draw (huntId, txHash, drawer, winner, winAmount, drawTime)
+    INSERT INTO contract_lottery_draw (huntId, txHash, drawer, luckyNumber, winner, winAmount, drawTime)
     VALUES
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5, $6, $7)
     ON CONFLICT (huntId) DO NOTHING;
     `;
         const lotteryDrawValues = [
-            huntId, txHash, drawer, winner, winAmount, drawTime
+            huntId, txHash, drawer, luckyNumber, winner, winAmount, drawTime
         ];
         await client.query(insertLotteryDraw, lotteryDrawValues);
         console.log('Sample data inserted into "contract_lottery_draw" with huntid:', huntId);
