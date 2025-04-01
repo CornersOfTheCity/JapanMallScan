@@ -69,6 +69,7 @@ export async function setupDatabase() {
           endTime INTEGER NOT NULL,
           amount INTEGER NOT NULL,
           selled INTEGER NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
@@ -93,6 +94,7 @@ export async function setupDatabase() {
           startIndex INTEGER NOT NULL,
           endIndex INTEGER NOT NULL,
           buyTime INTEGER NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId)
         );
@@ -135,6 +137,7 @@ export async function setupDatabase() {
           winner VARCHAR(100) NOT NULL,
           winAmount INTEGER NOT NULL,
           drawTime TIMESTAMP NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
@@ -157,6 +160,7 @@ export async function setupDatabase() {
           claimer VARCHAR(100) NOT NULL,
           claimAmount INTEGER NOT NULL,
           claimTime TIMESTAMP NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId) -- 添加外键约束
         );
@@ -197,6 +201,7 @@ export async function setupDatabase() {
           claimer VARCHAR(100) NOT NULL,
           claimAmount INTEGER NOT NULL,
           claimTime TIMESTAMP NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
@@ -219,6 +224,7 @@ export async function setupDatabase() {
           winner VARCHAR(100) NOT NULL,
           abandon BOOLEAN DEFAULT TRUE,
           abandonTime TIMESTAMP NOT NULL,
+          sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
