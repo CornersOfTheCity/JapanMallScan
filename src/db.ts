@@ -61,14 +61,14 @@ export async function setupDatabase() {
             const createTableHunt = `
         CREATE TABLE contract_hunt (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER UNIQUE NOT NULL,
+          huntId BIGINT UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
-          type INTEGER NOT NULL,
+          type BIGINT NOT NULL,
           price DECIMAL(30) NOT NULL,
-          startTime INTEGER NOT NULL,
-          endTime INTEGER NOT NULL,
-          amount INTEGER NOT NULL,
-          selled INTEGER NOT NULL,
+          startTime BIGINT NOT NULL,
+          endTime BIGINT NOT NULL,
+          amount BIGINT NOT NULL,
+          selled BIGINT NOT NULL,
           sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -87,13 +87,13 @@ export async function setupDatabase() {
             const createTableBuy = `
         CREATE TABLE contract_buy (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER NOT NULL,
+          huntId BIGINT NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           address VARCHAR(100) NOT NULL,
-          buyAmount INTEGER NOT NULL,
-          startIndex INTEGER NOT NULL,
-          endIndex INTEGER NOT NULL,
-          buyTime INTEGER NOT NULL,
+          buyAmount BIGINT NOT NULL,
+          startIndex BIGINT NOT NULL,
+          endIndex BIGINT NOT NULL,
+          buyTime BIGINT NOT NULL,
           sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (huntId) REFERENCES contract_hunt(huntId)
@@ -130,12 +130,12 @@ export async function setupDatabase() {
             const createTableLotteryDraw = `
         CREATE TABLE contract_lottery_draw (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER UNIQUE NOT NULL,
+          huntId BIGINT UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           drawer VARCHAR(100) NOT NULL,
-          luckyNumber INTEGER NOT NULL,
+          luckyNumber BIGINT NOT NULL,
           winner VARCHAR(100) NOT NULL,
-          winAmount INTEGER NOT NULL,
+          winAmount BIGINT NOT NULL,
           drawTime TIMESTAMP NOT NULL,
           sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -155,10 +155,10 @@ export async function setupDatabase() {
             const createTableUserClaim = `
         CREATE TABLE contract_user_claim (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER NOT NULL,
+          huntId BIGINT NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           claimer VARCHAR(100) NOT NULL,
-          claimAmount INTEGER NOT NULL,
+          claimAmount BIGINT NOT NULL,
           claimTime TIMESTAMP NOT NULL,
           sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -196,10 +196,10 @@ export async function setupDatabase() {
             const createTableWinnerClaim = `
         CREATE TABLE contract_winner_claim (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER UNIQUE NOT NULL,
+          huntId BIGINT UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           claimer VARCHAR(100) NOT NULL,
-          claimAmount INTEGER NOT NULL,
+          claimAmount BIGINT NOT NULL,
           claimTime TIMESTAMP NOT NULL,
           sync BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -219,7 +219,7 @@ export async function setupDatabase() {
             const createTableWinnerAbandon = `
         CREATE TABLE contract_winner_abandon (
           id SERIAL PRIMARY KEY,
-          huntId INTEGER UNIQUE NOT NULL,
+          huntId BIGINT UNIQUE NOT NULL,
           txHash VARCHAR(100) UNIQUE NOT NULL,
           winner VARCHAR(100) NOT NULL,
           abandon BOOLEAN DEFAULT TRUE,

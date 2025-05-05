@@ -30,57 +30,68 @@ async function main() {
     const contractAddress = Address.parse(process.env.CONTRACT_ADDRESS!); // address that you want to fetch transactions from
 
     await setupDatabase();
-    // let recordLt = BigInt(55037007000001);
-    // let recordHash = "v72Oi3/U1qjZkiSK33hygJXSBmPK6+LCk90P2/Jl4oQ=";
-    let recordLt = BigInt(0);
-    let recordHash = "0x0";
+    let recordLt = BigInt(33246025000001);
+    let recordHash = "T16q6m7sSqVC/WpzrfRRpigunZwWY+yqHyfkghbuskM=";
+    // let recordLt = BigInt(0);
+    // let recordHash = "0x0";
     while (true) {
         try {
             const transactions = recordLt == BigInt(0) ? await client.getTransactions(contractAddress, {
-                limit: 50,
+                limit: 5,
+                archival: true,
             }) : await client.getTransactions(contractAddress, {
-                limit: 50,
-                lt: recordLt.toString(),
+                limit: 5,
+                // lt: recordLt.toString(),
                 hash: recordHash,
+                to_lt: recordLt.toString(),
+                archival: true,
             });
 
-            for (const tx of transactions.reverse()) {
+            let reverseTransactions = transactions.reverse();
+            console.log("New Transactions: ", reverseTransactions.length);
+
+            for (const tx of reverseTransactions) {
+                console.log("Transaction LT: ", tx.lt);
                 if (tx.lt < recordLt) {
                     continue;
                 }
-                // let txHash = tx.hash().toString('base64');
+                let txHash = tx.hash().toString('base64');
+                console.log("Transaction Hash: ", txHash);
+
                 recordLt = tx.lt;
                 recordHash = tx.hash().toString('base64');
 
                 let bodySlice = tx.outMessages.get(0)?.body!.asSlice()!;
+                if (!bodySlice) {
+                    continue;
+                }
                 let body = bodySlice.clone();
 
                 switch (body.loadUint(32)!) {
                     case 2514899494:
                         let createHuntEmit = loadCreateHuntEmit(bodySlice);
                         addHunt(createHuntEmit.huntId, recordHash, createHuntEmit.type, createHuntEmit.price, createHuntEmit.startTime, createHuntEmit.endTime, createHuntEmit.amount, createHuntEmit.selld);
-                        // console.log(createHuntEmit);
                         break;
-                    case 1315424692:
+                    case 2064160398:
                         let buyEmit = loadBuyEmit(bodySlice);
                         addBuy(buyEmit.huntId, recordHash, buyEmit.userAddr.toString(), buyEmit.amount, buyEmit.startIndex, buyEmit.endIndex, buyEmit.timeasmp);
-                    // console.log(buyEmit);
+                        break;
                     case 1274955844:
                         let lotteryDrawEmit = loadLotteryDrawEmit(bodySlice);
                         addLotteryDraw(lotteryDrawEmit.huntId, recordHash, lotteryDrawEmit.drawer.toString(), lotteryDrawEmit.luckyNumber, lotteryDrawEmit.winner.toString(), lotteryDrawEmit.winAmount, lotteryDrawEmit.timeStamp);
-                    // console.log(lotteryDrawEmit);
+                        break;
                     case 1780621300:
                         let userClaimBackEmit = loadUserClaimBackEmit(bodySlice);
                         addUserClaim(userClaimBackEmit.huntId, recordHash, userClaimBackEmit.claimer.toString(), userClaimBackEmit.claimAmount, userClaimBackEmit.timeStamp);
-                    // console.log(userClaimBackEmit);
+                        break;
                     case 462498381:
                         let winnerClaimEmit = loadWinnerClaimEmit(bodySlice);
                         addWinnerClaim(winnerClaimEmit.huntId, recordHash, winnerClaimEmit.claimer.toString(), winnerClaimEmit.claimAmount, winnerClaimEmit.timeStamp);
-                    // console.log(winnerClaimEmit);
+                        break;
                     case 4023690496:
                         let winnerAbondonEmit = loadWinnerAbondonEmit(bodySlice);
                         addWinnerAbandon(winnerAbondonEmit.huntId, recordHash, winnerAbondonEmit.winner.toString(), winnerAbondonEmit.abondon, winnerAbondonEmit.timeStamp);
-                    // console.log(winnerAbondonEmit);
+                        break;
                     default:
                         break;
                 }
